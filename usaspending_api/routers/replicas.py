@@ -6,19 +6,21 @@ import random
 class ReadReplicaRouter(object):
 
     def db_for_read(self, model, **hints):
-        return random.choice(['db_source', 'db_r1'])
+        if (model.__name__ == 'RequestCatalog'):
+            return 'db_req_catalog'
+        return random.choice(['db_r1', 'db_r2'])
 
     def db_for_write(self, model, **hints):
-        """"
-        write to source db only (bc read replicas)
-        """
+        if (model.__name__ == 'RequestCatalog'):
+            return 'db_req_catalog'
         return 'db_source'
 
     def allow_relation(self, obj1, obj2, **hints):
-        db_list = ('db_source', 'db_r1')
-        if obj1._state.db in db_list and obj2._state.db in db_list:
-            return True
-        return None
+        return True
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
-        return True
+        if model_name == 'requestcatalog' and db == 'db_req_catalog':
+            return True
+        if model_name != 'requestcatalog' and db == 'db_source':
+            return True
+        return False

@@ -114,13 +114,17 @@ DATABASES = {'default': dj_database_url.config(conn_max_age=10)}
 
 # read replica env vars... if not set, default DATABASE_URL will get used
 # if only one set, this will error out (single DB should use DATABASE_URL)
-if os.environ.get('DB_SOURCE') or os.environ.get('DB_R1'):
-    DATABASES['db_source'] = dj_database_url.parse(os.environ.get('DB_SOURCE'), conn_max_age=10)
+if os.environ.get('DB_R1') or os.environ.get('DB_R2'):
     DATABASES['db_r1'] = dj_database_url.parse(os.environ.get('DB_R1'), conn_max_age=10)
+    DATABASES['db_r2'] = dj_database_url.parse(os.environ.get('DB_R2'), conn_max_age=10)
+    DATABASES['db_req_catalog'] = dj_database_url.parse(os.environ.get('DB_REQ_CATALOG'), conn_max_age=10)
     DATABASE_ROUTERS = ['usaspending_api.routers.replicas.ReadReplicaRouter']
 
+if os.environ.get('DB_SOURCE'):
+    DATABASES['db_source'] = dj_database_url.parse(os.environ.get('DB_SOURCE'), conn_max_age=10)
+
 # import a second database connection for ETL, connecting to the data broker
-# using the environemnt variable, DATA_BROKER_DATABASE_URL - only if it is set
+# using the environment variable, DATA_BROKER_DATABASE_URL - only if it is set
 if os.environ.get('DATA_BROKER_DATABASE_URL') and not sys.argv[1:2] == ['test']:
     DATABASES['data_broker'] = dj_database_url.parse(os.environ.get('DATA_BROKER_DATABASE_URL'), conn_max_age=600)
 
@@ -273,7 +277,7 @@ CACHES = {
 }
 
 # Cache environment - 'local', 'disabled', or 'elasticache'
-CACHE_ENVIRONMENT = 'local'
+CACHE_ENVIRONMENT = 'disabled'
 
 # Set up the appropriate elasticache for our environment
 CACHE_ENVIRONMENTS = {
