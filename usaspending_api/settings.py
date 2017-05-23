@@ -117,8 +117,10 @@ DATABASES = {'default': dj_database_url.config(conn_max_age=10)}
 if os.environ.get('DB_R1') or os.environ.get('DB_R2'):
     DATABASES['db_r1'] = dj_database_url.parse(os.environ.get('DB_R1'), conn_max_age=10)
     DATABASES['db_r2'] = dj_database_url.parse(os.environ.get('DB_R2'), conn_max_age=10)
-    DATABASES['db_req_catalog'] = dj_database_url.parse(os.environ.get('DB_REQ_CATALOG'), conn_max_age=10)
     DATABASE_ROUTERS = ['usaspending_api.routers.replicas.ReadReplicaRouter']
+
+if os.environ.get('DB_REQ_CATALOG'):
+    DATABASES['db_req_catalog'] = dj_database_url.parse(os.environ.get('DB_REQ_CATALOG'), conn_max_age=10)
 
 if os.environ.get('DB_SOURCE'):
     DATABASES['db_source'] = dj_database_url.parse(os.environ.get('DB_SOURCE'), conn_max_age=10)
