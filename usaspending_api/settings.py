@@ -112,20 +112,28 @@ CORS_ORIGIN_ALLOW_ALL = True  # Temporary while in development
 
 DATABASES = {'default': dj_database_url.config(conn_max_age=10)}
 
-# read replica env vars... if not set, default DATABASE_URL will get used
-# if only one set, this will error out (single DB should use DATABASE_URL)
-if os.environ.get('DB_R1') or os.environ.get('DB_R2'):
-    DATABASES['db_r1'] = dj_database_url.parse(os.environ.get('DB_R1'), conn_max_age=10)
-    DATABASES['db_r2'] = dj_database_url.parse(os.environ.get('DB_R2'), conn_max_age=10)
-    DATABASE_ROUTERS = ['usaspending_api.routers.replicas.ReadReplicaRouter']
+# If you are developing, just set DATABASE_URL and django will default all routes to that.
 
-if os.environ.get('DB_REQ_CATALOG'):
-    DATABASES['db_req_catalog'] = dj_database_url.parse(os.environ.get('DB_REQ_CATALOG'), conn_max_age=10)
+# The only thing to note for local development is if DB_R1 and DB_R2 are set,
+# the router used will be routers/replicas.py, which needs these env vars:
+#     DB_R1 and DB_R2 - two read replicas
+#     DB_SOURCE - master db for loads/inserts
+#     DB_REQ_CATALOG - separate request catalog
+
+DEFAULT_CONNECTION_AGE = 10  # Lower if using cache heavily
+
+if os.environ.get('DB_R1') or os.environ.get('DB_R2'):
+    DATABASE_ROUTERS = ['usaspending_api.routers.replicas.ReadReplicaRouter']
+    DATABASES['db_r1'] = dj_database_url.parse(os.environ.get('DB_R1'), conn_max_age=DEFAULT_CONNECTION_AGE)
+    DATABASES['db_r2'] = dj_database_url.parse(os.environ.get('DB_R2'), conn_max_age=DEFAULT_CONNECTION_AGE)
 
 if os.environ.get('DB_SOURCE'):
-    DATABASES['db_source'] = dj_database_url.parse(os.environ.get('DB_SOURCE'), conn_max_age=10)
+    DATABASES['db_source'] = dj_database_url.parse(os.environ.get('DB_SOURCE'), conn_max_age=DEFAULT_CONNECTION_AGE)
 
-# import a second database connection for ETL, connecting to the data broker
+if os.environ.get('DB_REQ_CATALOG'):
+    DATABASES['db_req_catalog'] = dj_database_url.parse(os.environ.get('DB_REQ_CATALOG'), conn_max_age=DEFAULT_CONNECTION_AGE)
+
+# import a database connection for ETL, connecting to the data broker
 # using the environment variable, DATA_BROKER_DATABASE_URL - only if it is set
 if os.environ.get('DATA_BROKER_DATABASE_URL') and not sys.argv[1:2] == ['test']:
     DATABASES['data_broker'] = dj_database_url.parse(os.environ.get('DATA_BROKER_DATABASE_URL'), conn_max_age=600)
